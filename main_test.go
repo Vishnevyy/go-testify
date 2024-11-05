@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
 func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	req, err := http.NewRequest("GET", "/cafe?city=moscow&count=10", nil)
 	require.NoError(t, err)
