@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,15 +17,12 @@ func TestMainHandlerWhenCountMoreThanTotal(t *testing.T) {
 	// Обработаем запрос
 	handler.ServeHTTP(responseRecorder, req)
 	// Проверка статуса ответа
-	assert.Equal(t, http.StatusOK, responseRecorder.Code)
-	// Проверка тела ответа
-	expectedCafes := strings.Join(cafeList["moscow"], ",")
+	require.Equal(t, http.StatusOK, responseRecorder.Code)
+	// Ожидаемое значение ответа
+	expectedCafes := "Мир кофе,Сладкоежка,Кофе и завтраки,Сытый студент"
 	assert.Equal(t, expectedCafes, responseRecorder.Body.String())
-	// Убедитесь, что тело не пустое
-	assert.NotEmpty(t, responseRecorder.Body.String())
-	// Проверка длины ответа
-	assert.Len(t, responseRecorder.Body.String(), len(expectedCafes))
 }
+
 func TestMainHandlerWithIncorrectCity(t *testing.T) {
 	req, err := http.NewRequest("GET", "/cafe?city=notarealcity&count=2", nil)
 	require.NoError(t, err)
@@ -35,10 +31,11 @@ func TestMainHandlerWithIncorrectCity(t *testing.T) {
 	// Обработаем запрос
 	handler.ServeHTTP(responseRecorder, req)
 	// Проверка статуса ответа
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code)
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code)
 	// Проверка тела ответа
 	assert.Equal(t, "wrong city value", responseRecorder.Body.String())
 }
+
 func TestMainHandlerWithMissingCount(t *testing.T) {
 	req, err := http.NewRequest("GET", "/cafe?city=moscow", nil)
 	require.NoError(t, err)
@@ -47,7 +44,20 @@ func TestMainHandlerWithMissingCount(t *testing.T) {
 	// Обработаем запрос
 	handler.ServeHTTP(responseRecorder, req)
 	// Проверка статуса ответа
-	assert.Equal(t, http.StatusBadRequest, responseRecorder.Code)
+	require.Equal(t, http.StatusBadRequest, responseRecorder.Code)
 	// Проверка тела ответа
 	assert.Equal(t, "count missing", responseRecorder.Body.String())
+}
+
+func TestMainHandlerWhenRequestIsCorrect(t *testing.T) {
+	req, err := http.NewRequest("GET", "/cafe?city=moscow&count=2", nil)
+	require.NoError(t, err)
+	responseRecorder := httptest.NewRecorder()
+	handler := http.HandlerFunc(mainHandle)
+	// Обработаем запрос
+	handler.ServeHTTP(responseRecorder, req)
+	// Проверка статуса ответа
+	require.Equal(t, http.StatusOK, responseRecorder.Code)
+	// Проверка, что тело ответа не пустое
+	assert.NotEmpty(t, responseRecorder.Body.String())
 }
